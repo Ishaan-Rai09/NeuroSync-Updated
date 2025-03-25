@@ -119,9 +119,8 @@ const Settings = () => {
     
     setIsSubmitting(true);
     
-    // For now, we'll just update the local storage
-    // In a real app, you would make an API call to update the user's information
     try {
+      // Update profile information
       const updatedUser = {
         ...user,
         name: `${formData.firstName} ${formData.lastName}`,
@@ -130,6 +129,27 @@ const Settings = () => {
       
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
+
+      // Update password if provided
+      if (formData.newPassword) {
+        const response = await fetch('/api/auth/update-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            currentPassword: formData.currentPassword,
+            newPassword: formData.newPassword,
+            userId: user.id // This should now be available from localStorage
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to update password');
+        }
+      }
       
       toast.success('Profile updated successfully!');
       
@@ -141,7 +161,7 @@ const Settings = () => {
         confirmPassword: ''
       }));
     } catch (error) {
-      toast.error('Failed to update profile');
+      toast.error(error.message || 'Failed to update profile');
     } finally {
       setIsSubmitting(false);
     }

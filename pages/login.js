@@ -41,12 +41,14 @@ const Login = () => {
         if (formData.rememberMe) {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify({
+            id: data.user.id,
             name: data.user.name,
             email: data.user.email
           }));
         } else {
           sessionStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify({
+            id: data.user.id,
             name: data.user.name,
             email: data.user.email
           }));
