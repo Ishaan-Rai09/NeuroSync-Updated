@@ -2,11 +2,17 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/chat": "pages/chat.js",
+  "/about": "pages/about.js",
+  "/features": "pages/features.js",
+  "/pricing": "pages/pricing.js",
   "/": "pages/index.js",
+  "/how-it-works": "pages/how-it-works.js",
+  "/demo": "pages/demo.js",
+  "/signup": "pages/signup.js",
+  "/contact": "pages/contact.js",
   "/login": "pages/login.js",
-  "/api/auth/login": "pages/api/auth/login.js",
+  "/api/auth/register": "pages/api/auth/register.js",
+  "/chat": "pages/chat.js",
   "/settings": "pages/settings.js",
-  "/profile": "pages/profile.js",
-  "/features": "pages/features.js"
+  "/profile": "pages/profile.js"
 }

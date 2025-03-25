@@ -283,10 +283,11 @@ const About = () => {
               We're looking for passionate individuals to help us transform mental health care with technology. Explore career opportunities and join our team.
             </p>
             <div className="mt-8">
-              <Link href="/careers">
-                <a className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-indigo-50 transition-colors duration-200">
-                  View Open Positions
-                </a>
+              <Link 
+                href="/careers"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-indigo-50 transition-colors duration-200"
+              >
+                View Open Positions
               </Link>
             </div>
           </div>

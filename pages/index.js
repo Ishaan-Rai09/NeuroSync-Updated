@@ -21,12 +21,18 @@ const Home = () => {
               <div className="mt-10 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
                 <div className="sm:flex sm:justify-center lg:justify-start">
                   <div className="rounded-md shadow">
-                    <Link href="/chat" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-indigo-700 md:py-4 md:text-lg md:px-10 transition duration-150 ease-in-out transform hover:-translate-y-1">
+                    <Link 
+                      href="/chat" 
+                      className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-indigo-700 md:py-4 md:text-lg md:px-10 transition duration-150 ease-in-out transform hover:-translate-y-1"
+                    >
                       Start Your Journey
                     </Link>
                   </div>
                   <div className="mt-3 sm:mt-0 sm:ml-3">
-                    <Link href="/demo" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-indigo-100 hover:bg-indigo-200 dark:text-white dark:bg-gray-700 dark:hover:bg-gray-600 md:py-4 md:text-lg md:px-10 transition duration-150 ease-in-out">
+                    <Link 
+                      href="/demo" 
+                      className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-indigo-100 hover:bg-indigo-200 dark:text-white dark:bg-gray-700 dark:hover:bg-gray-600 md:py-4 md:text-lg md:px-10 transition duration-150 ease-in-out"
+                    >
                       <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                       </svg>
@@ -295,17 +301,19 @@ const Home = () => {
           </h2>
           <div className="mt-8 flex flex-col sm:flex-row lg:mt-0 lg:flex-shrink-0 gap-4">
             <div className="inline-flex rounded-md shadow">
-              <Link href="/signup">
-                <span className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-gray-50 transition duration-150 ease-in-out">
-                  Start Free Trial
-                </span>
+              <Link 
+                href="/signup"
+                className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-white hover:bg-gray-50 transition duration-150 ease-in-out"
+              >
+                Start Free Trial
               </Link>
             </div>
             <div className="inline-flex rounded-md shadow">
-              <Link href="/learn-more">
-                <span className="inline-flex items-center justify-center px-5 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-indigo-600 transition duration-150 ease-in-out">
-                  Learn More
-                </span>
+              <Link 
+                href="/learn-more"
+                className="inline-flex items-center justify-center px-5 py-3 border border-white text-base font-medium rounded-md text-white hover:bg-indigo-600 transition duration-150 ease-in-out"
+              >
+                Learn More
               </Link>
             </div>
           </div>

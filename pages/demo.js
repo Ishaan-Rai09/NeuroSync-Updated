@@ -110,15 +110,17 @@ const Demo = () => {
                 </p>
               </div>
               <div className="flex space-x-4">
-                <Link href="/features">
-                  <a className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-indigo-700 transition-colors duration-200">
-                    Learn More
-                  </a>
+                <Link 
+                  href="/features"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-indigo-700 transition-colors duration-200"
+                >
+                  Learn More
                 </Link>
-                <Link href="/signup">
-                  <a className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200">
-                    Sign Up
-                  </a>
+                <Link 
+                  href="/signup"
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200"
+                >
+                  Sign Up
                 </Link>
               </div>
             </div>
@@ -223,10 +225,11 @@ const Demo = () => {
                 <li>End-to-end encryption for complete privacy</li>
               </ul>
               <div className="mt-6">
-                <Link href="/signup">
-                  <a className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-indigo-700 transition-colors duration-200">
-                    Try the Full Experience
-                  </a>
+                <Link 
+                  href="/signup"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-indigo-700 transition-colors duration-200"
+                >
+                  Try the Full Experience
                 </Link>
               </div>
             </div>
