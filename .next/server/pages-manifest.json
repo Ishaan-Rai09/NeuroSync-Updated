@@ -2,11 +2,10 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/settings": "pages/settings.js",
-  "/api/auth/update-password": "pages/api/auth/update-password.js",
+  "/pricing": "pages/pricing.js",
+  "/contact": "pages/contact.js",
+  "/crisis": "pages/crisis.js",
+  "/chat": "pages/chat.js",
   "/signup": "pages/signup.js",
-  "/login": "pages/login.js",
-  "/api/auth/login": "pages/api/auth/login.js",
-  "/": "pages/index.js",
-  "/chat": "pages/chat.js"
+  "/login": "pages/login.js"
 }

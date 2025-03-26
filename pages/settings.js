@@ -23,6 +23,7 @@ const Settings = () => {
     const userData = localStorage.getItem('user');
     if (userData) {
       const parsedUser = JSON.parse(userData);
+      console.log('User data loaded from localStorage:', parsedUser);
       setUser(parsedUser);
       
       // Populate name fields from full name
@@ -132,21 +133,25 @@ const Settings = () => {
 
       // Update password if provided
       if (formData.newPassword) {
+        // Get the auth token
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        
         const response = await fetch('/api/auth/update-password', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             currentPassword: formData.currentPassword,
-            newPassword: formData.newPassword,
-            userId: user.id // This should now be available from localStorage
+            newPassword: formData.newPassword
           }),
         });
 
         const data = await response.json();
 
         if (!response.ok) {
+          console.error('Password update failed:', data);
           throw new Error(data.message || 'Failed to update password');
         }
       }

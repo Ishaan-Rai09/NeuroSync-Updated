@@ -44,14 +44,19 @@ const Home = () => {
             </div>
             <div className="mt-12 relative sm:max-w-lg sm:mx-auto lg:mt-0 lg:max-w-none lg:mx-0 lg:col-span-6 lg:flex lg:items-center">
               <div className="relative mx-auto w-full rounded-lg shadow-2xl lg:max-w-md overflow-hidden transform transition duration-500 hover:scale-105 dark:ring-1 dark:ring-gray-700">
-                <div className="relative block w-full bg-white rounded-lg overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1920&q=80"
-                    alt="NeuroSync Mental Health App"
-                    className="w-full h-80 object-cover object-center"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-indigo-600 mix-blend-multiply opacity-20"></div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-30"></div>
+                <div className="relative block w-full bg-gradient-to-br from-gray-900 to-gray-800 rounded-lg overflow-hidden">
+                  <div className="relative w-full h-[400px]">
+                    <Image
+                      src="/images/neural-network.webp"
+                      alt="NeuroSync AI Neural Network"
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      priority
+                      className="rounded-lg"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-indigo-600/20 mix-blend-overlay"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/50 via-transparent to-transparent"></div>
                 </div>
               </div>
             </div>

@@ -40,6 +40,7 @@ const Login = () => {
         // Store token and user data in localStorage if remember me is checked
         if (formData.rememberMe) {
           localStorage.setItem('token', data.token);
+          console.log('Storing user data:', data.user);
           localStorage.setItem('user', JSON.stringify({
             id: data.user.id,
             name: data.user.name,
@@ -47,6 +48,7 @@ const Login = () => {
           }));
         } else {
           sessionStorage.setItem('token', data.token);
+          console.log('Storing user data:', data.user);
           localStorage.setItem('user', JSON.stringify({
             id: data.user.id,
             name: data.user.name,

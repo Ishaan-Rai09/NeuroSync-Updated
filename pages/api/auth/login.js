@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     res.status(200).json({
       token,
       user: {
-        id: user._id,
+        id: user._id.toString(),
         email: user.email,
         name: `${user.firstName} ${user.lastName}`
       }
