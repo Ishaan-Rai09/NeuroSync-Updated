@@ -2,10 +2,8 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/pricing": "pages/pricing.js",
-  "/contact": "pages/contact.js",
-  "/crisis": "pages/crisis.js",
   "/chat": "pages/chat.js",
-  "/signup": "pages/signup.js",
-  "/login": "pages/login.js"
+  "/profile": "pages/profile.js",
+  "/crisis": "pages/crisis.js",
+  "/api/user/emergency-contacts": "pages/api/user/emergency-contacts.js"
 }

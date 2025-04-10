@@ -1,6 +1,7 @@
 import '../styles/globals.css';
 import { useEffect } from 'react';
 import Head from 'next/head';
+import Script from 'next/script';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -22,24 +23,21 @@ function MyApp({ Component, pageProps }) {
 
   return (
     <>
-      <Head>
-        {/* Add a script to handle dark mode on initial page load, before React hydrates */}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              try {
-                var savedTheme = localStorage.getItem('theme');
-                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                }
-              } catch (e) {}
-            })();
-          `
-        }} />
-      </Head>
+      <Script id="dark-mode-script" strategy="beforeInteractive">
+        {`
+          (function() {
+            try {
+              var savedTheme = localStorage.getItem('theme');
+              var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+              if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.documentElement.classList.add('dark');
+              } else {
+                document.documentElement.classList.remove('dark');
+              }
+            } catch (e) {}
+          })();
+        `}
+      </Script>
       <Component {...pageProps} />
       <ToastContainer
         position="top-right"

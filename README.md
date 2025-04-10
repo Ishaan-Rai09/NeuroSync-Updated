@@ -12,6 +12,53 @@ NeuroSync is an advanced AI-powered mental health platform that provides persona
 - 🔒 Secure User Authentication
 - 📈 Progress Tracking
 
+## AI Integration
+
+NeuroSync uses SingularityNET AI services for intelligent conversation and emotional analysis:
+
+- **NLP Processing Pipeline**: User messages are processed through a multi-step pipeline:
+  1. Sentiment analysis to detect emotional state
+  2. Context-aware AI response generation
+  3. Personalized recommendations based on emotional state
+
+- **Recommendation Engine**: The AI suggests relevant:
+  - Mindfulness exercises
+  - Mental health resources
+  - Check-in activities
+
+- **Real-time Emotional Tracking**: Analysis of user messages to identify emotional patterns and provide targeted support.
+
+To use the AI features, you need to:
+1. Sign up for a SingularityNET API key
+2. Add your API key to the `.env.local` file
+3. Restart the application
+
+## SingularityNET API Key
+
+To use the real AI features in NeuroSync, you need to obtain a SingularityNET API key:
+
+1. **Register on SingularityNET Platform**:
+   - Visit [SingularityNET](https://singularitynet.io/) and create an account
+   - Navigate to the Developer Portal and register as a developer
+
+2. **Create a New API Key**:
+   - Once logged in, go to your developer dashboard
+   - Click on "Create New API Key"
+   - Name your key (e.g., "NeuroSync Integration")
+   - Select the services you need (chat, sentiment analysis, recommendation engine)
+
+3. **Configure the Application**:
+   - Copy your API key from the dashboard
+   - Create a `.env.local` file based on the `.env.local.example` template
+   - Paste your API key as the value for `NEXT_PUBLIC_SINGULARITYNET_API_KEY`
+
+4. **Restart Your Application**:
+   ```bash
+   npm run dev
+   ```
+
+**Note for Development**: If you don't have an API key yet, NeuroSync will use a fallback demo mode with simulated AI responses when running in development mode.
+
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
@@ -39,6 +86,8 @@ Create a `.env.local` file in the NeuroSync-AI-Frontend directory with the follo
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
 NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_SINGULARITYNET_API_KEY=your_singularitynet_api_key
+NEXT_PUBLIC_SINGULARITYNET_API_URL=https://api.singularitynet.io/v1
 ```
 
 4. Start the development server:

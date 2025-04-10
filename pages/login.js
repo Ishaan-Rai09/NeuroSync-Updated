@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
@@ -12,6 +12,26 @@ const Login = () => {
     rememberMe: false
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          if (parsedUser && parsedUser.id) {
+            // User is already logged in, redirect to chat
+            router.push('/chat');
+          }
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          // Invalid user data, remove it
+          localStorage.removeItem('user');
+        }
+      }
+    }
+  }, [router]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

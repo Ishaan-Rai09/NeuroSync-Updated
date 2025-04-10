@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
 import Link from 'next/link';
+import { toast } from 'react-toastify';
+import EmergencyContacts from '../components/profile/EmergencyContacts';
 
 const Profile = () => {
   const [user, setUser] = useState(null);
@@ -26,9 +28,9 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <Layout title="Profile - NeuroSync">
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <Layout>
+        <div className="flex justify-center items-center h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-purple-500"></div>
         </div>
       </Layout>
     );
@@ -41,7 +43,7 @@ const Profile = () => {
   return (
     <Layout title="Profile - NeuroSync">
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 py-12">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white dark:bg-gray-800 shadow-xl rounded-xl overflow-hidden">
             <div className="px-6 py-8 sm:p-10">
               <div className="text-center">
@@ -88,6 +90,28 @@ const Profile = () => {
                         <p className="mt-1 text-sm text-gray-900 dark:text-white">0</p>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Emergency Contacts Section */}
+              <div className="mt-10">
+                <EmergencyContacts />
+                
+                <div className="mt-6 bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-blue-800 mb-2">Crisis Detection Integration</h3>
+                  <p className="text-sm text-blue-700">
+                    When NeuroSync detects signs of a mental health crisis, it can automatically notify your emergency contacts via WhatsApp.
+                  </p>
+                  <div className="mt-3 flex items-center">
+                    <input
+                      type="checkbox"
+                      id="enableAutoAlert"
+                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="enableAutoAlert" className="ml-2 block text-sm text-blue-800">
+                      Enable automatic WhatsApp alerts during crisis detection
+                    </label>
                   </div>
                 </div>
               </div>

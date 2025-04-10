@@ -1,9 +1,32 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import Layout from '../components/Layout';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 
 const Home = () => {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Check if user is already logged in
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          if (parsedUser && parsedUser.id) {
+            // User is logged in, redirect to chat
+            router.push('/chat');
+          }
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          // Invalid user data, remove it
+          localStorage.removeItem('user');
+        }
+      }
+    }
+  }, [router]);
+
   return (
     <Layout>
       {/* Hero Section */}
