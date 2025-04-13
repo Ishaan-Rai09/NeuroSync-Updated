@@ -28,15 +28,18 @@ const SAMPLE_RECOMMENDATIONS = [
 export default async function handler(req, res) {
   // Only allow POST requests
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { message, history, userId } = req.body;
     
-    if (!message) {
-      return res.status(400).json({ message: 'Message is required' });
+    if (!message || (typeof message === 'object' && !message.content)) {
+      return res.status(400).json({ error: 'Message content is required' });
     }
+
+    // Extract message content whether it's a string or object
+    const messageContent = typeof message === 'string' ? message : message.content;
 
     // Get user profile if userId is provided
     let userProfile = {};
@@ -51,11 +54,20 @@ export default async function handler(req, res) {
 
     try {
       // Process the message through AI middleware
-      const result = await aiMiddleware.processInput(message, history, userProfile);
+      const result = await aiMiddleware.processInput(messageContent, history, userProfile);
+      
+      // Format AI response as a message object to match local-chat.js format
+      const aiMessage = {
+        role: 'system',
+        content: result.response,
+        sentiment: result.sentiment,
+        emotions: result.emotions,
+        timestamp: new Date()
+      };
       
       // Return AI response to client
       res.status(200).json({
-        message: result.response,
+        message: aiMessage,
         sentiment: result.sentiment,
         emotions: result.emotions,
         recommendations: result.recommendations
@@ -67,7 +79,7 @@ export default async function handler(req, res) {
       // In production, you'd want to handle this differently
       if (process.env.NODE_ENV !== 'production') {
         // Determine sentiment based on message content for demo
-        const lowerMessage = message.toLowerCase();
+        const lowerMessage = messageContent.toLowerCase();
         let sentiment = 'neutral';
         let responseText = "I understand what you're saying. How else can I help you today?";
         
@@ -82,24 +94,38 @@ export default async function handler(req, res) {
           responseText = "It sounds like you might be feeling anxious. Deep breathing can sometimes help in moments like this.";
         }
         
+        const aiMessage = {
+          role: 'system',
+          content: responseText,
+          sentiment: sentiment,
+          emotions: { primary: sentiment, confidence: 0.8 },
+          timestamp: new Date()
+        };
+        
         res.status(200).json({
-          message: responseText,
+          message: aiMessage,
           sentiment: sentiment,
           emotions: { primary: sentiment, confidence: 0.8 },
           recommendations: SAMPLE_RECOMMENDATIONS
         });
       } else {
         res.status(500).json({ 
-          message: 'An error occurred while processing your message',
-          error: process.env.NODE_ENV === 'development' ? error.message : undefined
+          error: 'An error occurred processing your request',
+          message: { 
+            role: 'system', 
+            content: "I'm sorry, I'm having trouble processing your request right now. Please try again later." 
+          }
         });
       }
     }
   } catch (error) {
     console.error('Error in AI chat API:', error);
     res.status(500).json({ 
-      message: 'An error occurred while processing your message',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: 'An error occurred processing your request',
+      message: { 
+        role: 'system', 
+        content: "I'm sorry, I'm having trouble processing your request right now. Please try again later." 
+      }
     });
   }
 } 

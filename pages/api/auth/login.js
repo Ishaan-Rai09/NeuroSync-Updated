@@ -1,8 +1,4 @@
-import { connectToDatabase } from '../../../lib/mongodb';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+import { authService } from '../../../lib/auth-service';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -12,36 +8,33 @@ export default async function handler(req, res) {
   try {
     const { email, password } = req.body;
 
-    const { db } = await connectToDatabase();
-    const user = await db.collection('users').findOne({ email });
-
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+    // Basic validation
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Login user with Pinata-based auth service
+    const result = await authService.loginUser(email, password);
 
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-
-    // Create token
-    const token = jwt.sign(
-      { userId: user._id, email: user.email },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
+    // Return user info and token
     res.status(200).json({
-      token,
+      token: result.token,
       user: {
-        id: user._id.toString(),
-        email: user.email,
-        name: `${user.firstName} ${user.lastName}`
+        id: result.user._id,
+        email: result.user.email,
+        name: `${result.user.firstName} ${result.user.lastName}`,
+        firstName: result.user.firstName,
+        lastName: result.user.lastName
       }
     });
   } catch (error) {
     console.error('Login error:', error);
+    
+    // Return appropriate error message
+    if (error.message === 'Invalid email or password') {
+      return res.status(401).json({ message: error.message });
+    }
+    
     res.status(500).json({ message: 'Internal server error' });
   }
 } 

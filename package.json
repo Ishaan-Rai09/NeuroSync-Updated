@@ -1,7 +1,7 @@
 {
   "name": "neurosync",
   "version": "1.0.0",
-  "description": "AI-powered mental health companion",
+  "description": "AI-powered mental health companion with blockchain integration",
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
@@ -9,23 +9,43 @@
     "start": "next start",
     "lint": "next lint"
   },
-  "keywords": [],
+  "keywords": [
+    "mental-health",
+    "AI",
+    "blockchain",
+    "web3"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@formspree/react": "^3.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "@pinata/sdk": "^2.1.0",
     "autoprefixer": "^10.4.14",
-    "axios": "^1.6.2",
+    "axios": "^1.8.4",
     "bcryptjs": "^3.0.2",
+    "crypto-js": "^4.2.0",
+    "dotenv": "^16.5.0",
+    "ethers": "^5.7.2",
+    "framer-motion": "^12.6.5",
+    "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
-    "mongodb": "^6.15.0",
     "next": "^15.2.4",
+    "nft.storage": "^7.2.0",
     "postcss": "^8.4.24",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
     "react-toastify": "^11.0.5",
-    "tailwindcss": "^3.3.0"
+    "tailwindcss": "^3.3.0",
+    "web3": "^4.6.0"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
+    "chai": "^4.3.10",
+    "ethereum-waffle": "^4.0.10",
+    "hardhat": "^2.20.1"
   }
 }

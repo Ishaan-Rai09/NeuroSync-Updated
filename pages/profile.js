@@ -4,6 +4,13 @@ import Layout from '../components/Layout';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
 import EmergencyContacts from '../components/profile/EmergencyContacts';
+import dynamic from 'next/dynamic';
+
+// Import TokenStats component with no SSR (needed for wallet integration)
+const TokenStats = dynamic(
+  () => import('../components/blockchain/TokenStats'),
+  { ssr: false }
+);
 
 const Profile = () => {
   const [user, setUser] = useState(null);

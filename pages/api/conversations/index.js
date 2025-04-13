@@ -1,47 +1,53 @@
-import { conversationService } from '../../../lib/services/conversation-service';
-
 /**
- * API handler for conversation operations
- * GET: Fetch user conversations
- * POST: Create a new conversation
- * DELETE: Clear all user conversations
+ * API handler for conversations collection endpoints
+ * Supports GET (list) and POST (create) methods
  */
+import { pinataConversationService } from '../../../lib/services/pinata-conversation-service';
+
 export default async function handler(req, res) {
-  // Basic authentication check - in a real app, use proper auth middleware
-  // For this app, we'll accept the userId from the request directly
-  const userId = req.body.userId || req.query.userId;
-  
-  if (!userId) {
-    return res.status(401).json({ error: 'UserId is required for authentication' });
-  }
-  
   try {
-    // Handle different HTTP methods
-    switch (req.method) {
-      case 'GET':
-        const conversations = await conversationService.getUserConversations(userId);
-        return res.status(200).json(conversations);
+    // Extract userId directly from query or body instead of session
+    const userId = req.query.userId || req.body?.userId;
+
+    if (!userId) {
+      console.error('No user ID found in request');
+      return res.status(401).json({ error: 'User ID is required' });
+    }
+
+    if (req.method === 'GET') {
+      try {
+        const conversations = await pinataConversationService.getUserConversations(userId);
+        return res.status(200).json(conversations || []);
+      } catch (error) {
+        console.error('Error retrieving conversations:', error);
+        return res.status(500).json({ error: 'Failed to retrieve conversations' });
+      }
+    } else if (req.method === 'POST') {
+      try {
+        const { title = 'New Conversation', messages = [] } = req.body;
         
-      case 'POST':
-        const { message, analysis } = req.body;
-        
-        if (!message) {
-          return res.status(400).json({ error: 'Message is required' });
-        }
-        
-        const newConversation = await conversationService.createConversation(userId, message, analysis);
+        const newConversation = await pinataConversationService.createConversation(userId, title, messages);
         return res.status(201).json(newConversation);
-      
-      case 'DELETE':
-        // Clear all conversations for the user
-        const result = await conversationService.deleteAllConversations(userId);
-        return res.status(200).json({ success: true, deleted: result });
-        
-      default:
-        return res.status(405).json({ error: 'Method not allowed' });
+      } catch (error) {
+        console.error('Error creating conversation:', error);
+        return res.status(500).json({ error: 'Failed to create conversation' });
+      }
+    } else if (req.method === 'DELETE') {
+      try {
+        const success = await pinataConversationService.deleteAllUserConversations(userId);
+        return res.status(200).json({ 
+          message: success ? 'Successfully deleted all conversations' : 'Some conversations could not be deleted',
+          success 
+        });
+      } catch (error) {
+        console.error('Error deleting all conversations:', error);
+        return res.status(500).json({ error: 'Failed to delete conversations' });
+      }
+    } else {
+      return res.status(405).json({ error: 'Method not allowed' });
     }
   } catch (error) {
-    console.error('Conversation API error:', error);
+    console.error('Unexpected error in conversations API:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 } 

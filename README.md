@@ -14,7 +14,7 @@ NeuroSync is an advanced AI-powered mental health platform that provides persona
 
 ## AI Integration
 
-NeuroSync uses SingularityNET AI services for intelligent conversation and emotional analysis:
+NeuroSync uses a local LLaMA 3 model for intelligent conversation and emotional analysis:
 
 - **NLP Processing Pipeline**: User messages are processed through a multi-step pipeline:
   1. Sentiment analysis to detect emotional state
@@ -29,42 +29,42 @@ NeuroSync uses SingularityNET AI services for intelligent conversation and emoti
 - **Real-time Emotional Tracking**: Analysis of user messages to identify emotional patterns and provide targeted support.
 
 To use the AI features, you need to:
-1. Sign up for a SingularityNET API key
-2. Add your API key to the `.env.local` file
+1. Set up the local LLaMA 3 instance
+2. Configure the connection in the `.env.local` file
 3. Restart the application
 
-## SingularityNET API Key
+## Local LLaMA Configuration
 
-To use the real AI features in NeuroSync, you need to obtain a SingularityNET API key:
+To use the AI features in NeuroSync, you need to set up a local LLaMA instance:
 
-1. **Register on SingularityNET Platform**:
-   - Visit [SingularityNET](https://singularitynet.io/) and create an account
-   - Navigate to the Developer Portal and register as a developer
+1. **Install Ollama**:
+   - Visit [Ollama](https://ollama.ai/) and download the installer
+   - Follow the installation instructions for your platform
 
-2. **Create a New API Key**:
-   - Once logged in, go to your developer dashboard
-   - Click on "Create New API Key"
-   - Name your key (e.g., "NeuroSync Integration")
-   - Select the services you need (chat, sentiment analysis, recommendation engine)
+2. **Pull the LLaMA Model**:
+   - Open a terminal and run:
+   ```bash
+   ollama pull llama3.2
+   ```
 
 3. **Configure the Application**:
-   - Copy your API key from the dashboard
    - Create a `.env.local` file based on the `.env.local.example` template
-   - Paste your API key as the value for `NEXT_PUBLIC_SINGULARITYNET_API_KEY`
+   - Set the value for `NEXT_PUBLIC_LLAMA_API_URL` to your local Ollama instance (default: http://127.0.0.1:11434)
+   - Set the value for `NEXT_PUBLIC_LLAMA_MODEL_NAME` to the model name (default: llama3.2:latest)
 
 4. **Restart Your Application**:
    ```bash
    npm run dev
    ```
 
-**Note for Development**: If you don't have an API key yet, NeuroSync will use a fallback demo mode with simulated AI responses when running in development mode.
+**Note for Development**: NeuroSync includes fallback functionality with simulated AI responses when the LLaMA model is not available.
 
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
 - Node.js (v16.0.0 or higher)
 - npm (v7.0.0 or higher)
-- MongoDB (v4.0.0 or higher)
+- Ollama (for local LLaMA model)
 
 ## Installation
 
@@ -86,8 +86,8 @@ Create a `.env.local` file in the NeuroSync-AI-Frontend directory with the follo
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
 NEXT_PUBLIC_API_URL=http://localhost:3000
-NEXT_PUBLIC_SINGULARITYNET_API_KEY=your_singularitynet_api_key
-NEXT_PUBLIC_SINGULARITYNET_API_URL=https://api.singularitynet.io/v1
+NEXT_PUBLIC_LLAMA_API_URL=http://127.0.0.1:11434
+NEXT_PUBLIC_LLAMA_MODEL_NAME=llama3.2:latest
 ```
 
 4. Start the development server:
@@ -140,9 +140,13 @@ The application uses JWT (JSON Web Tokens) for authentication. Tokens are stored
 - localStorage for "Remember Me" functionality
 - sessionStorage for regular sessions
 
-## Database Configuration
+## Data Storage
 
-The application uses MongoDB for data storage. Ensure your MongoDB connection string is properly configured in the `.env.local` file.
+This project uses Pinata IPFS for conversation storage. No MongoDB required.
+
+- Conversations are stored directly on IPFS via Pinata
+- User profile data can be stored in local storage or on Pinata
+- No database setup required
 
 ## Deployment
 
@@ -185,7 +189,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Next.js team for the amazing framework
 - TailwindCSS for the utility-first CSS framework
-- MongoDB team for the robust database solution
 - All contributors who have helped shape NeuroSync
 
 ---

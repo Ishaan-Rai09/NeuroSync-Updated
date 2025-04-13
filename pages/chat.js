@@ -6,6 +6,8 @@ import { useRouter } from 'next/router';
 import axios from 'axios';
 import Recommendations from '../components/Recommendations';
 import AuthWrapper from '../components/AuthWrapper';
+import FilloutForm from '../components/FilloutForm';
+import Switch from '../components/Switch';
 
 const Chat = () => {
   const router = useRouter();
@@ -23,6 +25,7 @@ const Chat = () => {
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [crisisDetected, setCrisisDetected] = useState(false);
+  const [showFilloutForm, setShowFilloutForm] = useState(false);
 
   // Crisis keywords for detection
   const crisisKeywords = [
@@ -34,6 +37,10 @@ const Chat = () => {
 
   // Crisis detection function
   const checkForCrisis = (text) => {
+    // Check if text is undefined, null, or not a string
+    if (!text || typeof text !== 'string') {
+      return false;
+    }
     const lowerText = text.toLowerCase();
     return crisisKeywords.some(keyword => lowerText.includes(keyword));
   };
@@ -204,7 +211,13 @@ const Chat = () => {
     setIsLoadingHistory(true);
     try {
       const response = await axios.get(`/api/conversations/${conversationId}?userId=${user.id}`);
-      const conversation = response.data;
+      
+      // Extract conversation from response - handle both formats
+      const conversation = response.data.conversation || response.data;
+      
+      if (!conversation) {
+        throw new Error("Conversation not found or invalid response format");
+      }
       
       // Transform conversation messages to chat format
       const formattedMessages = conversation.messages.map((msg, index) => ({
@@ -267,6 +280,42 @@ const Chat = () => {
     }
   };
 
+  // Add new handler for deleting a conversation
+  const handleDeleteConversation = async (conversationId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!confirm('Are you sure you want to delete this conversation?')) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`/api/conversations/${conversationId}?userId=${user.id}`);
+      toast.success('Conversation deleted');
+      // Refresh the conversation list
+      fetchConversations(user.id);
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      toast.error('Failed to delete conversation');
+    }
+  };
+  
+  // Add new handler for clearing all conversations
+  const handleClearAllConversations = async () => {
+    if (!confirm('Are you sure you want to delete ALL your conversations? This cannot be undone.')) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`/api/conversations?userId=${user.id}`);
+      toast.success('All conversations cleared');
+      setConversations([]);
+    } catch (error) {
+      console.error('Error clearing conversations:', error);
+      toast.error('Failed to clear conversations');
+    }
+  };
+
   const handleSettings = () => {
     setActiveChat('settings');
     router.push('/settings');
@@ -281,7 +330,7 @@ const Chat = () => {
     const newValue = !isUsingLocalLlama;
     setIsUsingLocalLlama(newValue);
     localStorage.setItem('useLocalLlama', newValue.toString());
-    toast.info(`Switched to ${newValue ? 'Local LLaMA 3.2' : 'SingularityNET AI'}`);
+    toast.info(`Switched to ${newValue ? 'Local LLaMA 3.2' : 'Neural AI'}`);
     handleNewChat(); // Start a new chat when switching models
   };
 
@@ -322,7 +371,11 @@ const Chat = () => {
       const endpoint = isUsingLocalLlama ? '/api/ai/local-chat' : '/api/ai/chat';
       
       const response = await axios.post(endpoint, {
-        message: newMessage,
+        message: {
+          content: newMessage,
+          role: 'user',
+          timestamp: new Date()
+        },
         history: updatedHistory,
         userId: user.id,
         conversationId: currentConversationId
@@ -336,7 +389,7 @@ const Chat = () => {
       // Update chat history with AI response
       setChatHistory([
         ...updatedHistory,
-        { role: 'assistant', content: response.data.message }
+        { role: 'assistant', content: response.data.message.content || response.data.message }
       ]);
       
       // Update emotional state and recommendations
@@ -352,7 +405,9 @@ const Chat = () => {
       const botMessage = {
         id: messages.length + 2,
         type: 'bot',
-        text: response.data.message,
+        text: typeof response.data.message === 'object' 
+          ? response.data.message.content || 'Sorry, I couldn\'t process that properly.' 
+          : response.data.message || 'Sorry, I couldn\'t process that properly.',
         timestamp: new Date(),
         sentiment: response.data.sentiment,
         emotions: response.data.emotions
@@ -364,9 +419,11 @@ const Chat = () => {
       // This ensures we catch crisis risks that the AI identified in the conversation
       if (
         (response.data.emotions?.primary === 'distressed') || 
-        checkForCrisis(response.data.message) ||
+        checkForCrisis(typeof response.data.message === 'object' 
+          ? response.data.message.content 
+          : response.data.message) ||
         // Check if the message mentions suicide/self-harm resources
-        (response.data.message.toLowerCase().includes('suicide') && response.data.message.toLowerCase().includes('988'))
+        checkForCrisis(botMessage.text) && botMessage.text.includes('988')
       ) {
         handleCrisisDetected();
       }
@@ -397,48 +454,48 @@ const Chat = () => {
 
   return (
     <AuthWrapper>
-      <Layout title="Chat | NeuroSync">
-        <div className="flex h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900">
-          {/* Sidebar */}
-          <div className="hidden md:flex md:w-72 md:flex-col">
-            <div className="flex flex-col flex-grow pt-5 bg-white dark:bg-gray-800 overflow-y-auto border-r border-gray-200 dark:border-gray-700">
-              <div className="flex items-center flex-shrink-0 px-4">
-                <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
-                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4.31802 6.31802C2.56066 8.07538 2.56066 10.9246 4.31802 12.682L12.0001 20.364L19.682 12.682C21.4393 10.9246 21.4393 8.07538 19.682 6.31802C17.9246 4.56066 15.0754 4.56066 13.318 6.31802L12.0001 7.63609L10.682 6.31802C8.92462 4.56066 6.07538 4.56066 4.31802 6.31802Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <h2 className="ml-3 text-2xl font-semibold text-gray-900 dark:text-white">NeuroSync</h2>
+    <Layout title="Chat | NeuroSync">
+      <div className="flex h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900">
+        {/* Sidebar */}
+        <div className="hidden md:flex md:w-72 md:flex-col">
+          <div className="flex flex-col flex-grow pt-5 bg-white dark:bg-gray-800 overflow-y-auto border-r border-gray-200 dark:border-gray-700">
+            <div className="flex items-center flex-shrink-0 px-4">
+              <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
+                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4.31802 6.31802C2.56066 8.07538 2.56066 10.9246 4.31802 12.682L12.0001 20.364L19.682 12.682C21.4393 10.9246 21.4393 8.07538 19.682 6.31802C17.9246 4.56066 15.0754 4.56066 13.318 6.31802L12.0001 7.63609L10.682 6.31802C8.92462 4.56066 6.07538 4.56066 4.31802 6.31802Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </div>
-              <div className="mt-8 flex-grow flex flex-col">
-                <nav className="flex-1 px-4 space-y-3">
-                  <button 
-                    onClick={handleNewChat}
-                    className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
-                      activeChat === 'new' 
-                        ? 'bg-primary text-white' 
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                    } group transition-colors duration-150`}
-                  >
-                    <svg className={`mr-3 h-6 w-6 ${activeChat === 'new' ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    New Chat
-                  </button>
+              <h2 className="ml-3 text-2xl font-semibold text-gray-900 dark:text-white">NeuroSync</h2>
+            </div>
+            <div className="mt-8 flex-grow flex flex-col">
+              <nav className="flex-1 px-4 space-y-3">
+                <button 
+                  onClick={handleNewChat}
+                  className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
+                    activeChat === 'new' 
+                      ? 'bg-primary text-white' 
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  } group transition-colors duration-150`}
+                >
+                  <svg className={`mr-3 h-6 w-6 ${activeChat === 'new' ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  New Chat
+                </button>
                   
-                  <button 
-                    onClick={handleHistory}
-                    className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
+                <button 
+                  onClick={handleHistory}
+                  className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
                       activeChat === 'history' || activeChat === 'loaded'
-                        ? 'bg-primary text-white' 
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                    } group transition-colors duration-150`}
-                  >
+                      ? 'bg-primary text-white' 
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  } group transition-colors duration-150`}
+                >
                     <svg className={`mr-3 h-6 w-6 ${activeChat === 'history' || activeChat === 'loaded' ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    History
-                  </button>
+                  </svg>
+                  History
+                </button>
                   
                   {/* History list - only show when history is active */}
                   {activeChat === 'history' && (
@@ -446,77 +503,110 @@ const Chat = () => {
                       {isLoadingHistory ? (
                         <div className="text-gray-500 text-sm">Loading...</div>
                       ) : conversations.length > 0 ? (
-                        conversations.map((conv) => (
-                          <button
-                            key={conv._id}
-                            onClick={() => loadConversation(conv._id)}
-                            className="w-full text-left text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary truncate py-2"
-                          >
-                            {conv.title || `Conversation ${new Date(conv.createdAt).toLocaleDateString()}`}
-                          </button>
-                        ))
+                        <>
+                          <div className="mb-3">
+                            <button
+                              onClick={handleClearAllConversations}
+                              className="text-xs text-red-500 hover:text-red-700 transition-colors"
+                            >
+                              Clear All History
+                            </button>
+                          </div>
+                          {conversations.map((conv) => (
+                            <div key={conv._id} className="flex items-center group">
+                              <button
+                                onClick={() => loadConversation(conv._id)}
+                                className="flex-1 text-left text-sm text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary truncate py-2"
+                              >
+                                {conv.title || `Conversation ${new Date(conv.createdAt).toLocaleDateString()}`}
+                              </button>
+                              <button
+                                onClick={(e) => handleDeleteConversation(conv._id, e)}
+                                className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                aria-label="Delete conversation"
+                              >
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </>
                       ) : (
                         <div className="text-gray-500 text-sm">No conversations yet</div>
                       )}
                     </div>
                   )}
-                  <button 
-                    onClick={handleSettings}
-                    className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
-                      activeChat === 'settings' 
-                        ? 'bg-primary text-white' 
-                        : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                    } group transition-colors duration-150`}
-                  >
-                    <svg className={`mr-3 h-6 w-6 ${activeChat === 'settings' ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Settings
-                  </button>
+                <button 
+                  onClick={handleSettings}
+                  className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg ${
+                    activeChat === 'settings' 
+                      ? 'bg-primary text-white' 
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  } group transition-colors duration-150`}
+                >
+                  <svg className={`mr-3 h-6 w-6 ${activeChat === 'settings' ? 'text-white' : 'text-gray-400 group-hover:text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Settings
+                </button>
                   
                   {/* AI Model Toggle Button */}
+                  <div className="flex items-center space-x-3 mt-5 border-t border-gray-100 dark:border-gray-700 pt-5 px-5">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                      {isUsingLocalLlama ? 'Using: LLaMA 3.2' : 'Using: Neural AI'}
+                    </div>
+                    <div>
+                      <Switch 
+                        isOn={isUsingLocalLlama} 
+                        handleToggle={toggleAiModel}
+                        id="ai-model-toggle"
+                      />
+                    </div>
+                  </div>
+
                   <button 
-                    onClick={toggleAiModel}
-                    className="w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group transition-colors duration-150 mt-6"
+                    onClick={() => setShowFilloutForm(true)}
+                    className="w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 group transition-colors duration-150"
                   >
                     <svg className="mr-3 h-6 w-6 text-gray-400 group-hover:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
-                    {isUsingLocalLlama ? 'Using: LLaMA 3.2' : 'Using: SingularityNET'}
+                    Call to NeuroSync
                   </button>
-                </nav>
-              </div>
-              {user && (
-                <div className="flex-shrink-0 flex border-t border-gray-200 dark:border-gray-700 p-4">
-                  <div className="flex items-center w-full">
-                    <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
-                      <span className="text-base font-medium">{user.name.charAt(0)}</span>
-                    </div>
-                    <div className="ml-3 flex-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
-                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{user.email}</p>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="ml-2 p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
-                    >
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              )}
+              </nav>
             </div>
+            {user && (
+              <div className="flex-shrink-0 flex border-t border-gray-200 dark:border-gray-700 p-4">
+                <div className="flex items-center w-full">
+                  <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
+                    <span className="text-base font-medium">{user.name.charAt(0)}</span>
+                  </div>
+                  <div className="ml-3 flex-1">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</p>
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{user.email}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="ml-2 p-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
+        </div>
 
-          {/* Chat area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Chat area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
             {/* Chat header for mobile - AI Model indicator */}
             <div className="md:hidden flex items-center justify-between border-b border-gray-200 dark:border-gray-700 py-2 px-4 bg-white dark:bg-gray-800">
               <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                {isUsingLocalLlama ? 'Using LLaMA 3.2 (Local)' : 'Using SingularityNET'}
+                {isUsingLocalLlama ? 'Using LLaMA 3.2 (Local)' : 'Using Neural AI'}
               </h3>
               <button 
                 onClick={toggleAiModel}
@@ -528,6 +618,35 @@ const Chat = () => {
               </button>
             </div>
             
+            {/* Add a header bar for the current conversation when loaded */}
+            {activeChat === 'loaded' && currentConversationId && (
+              <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                <h2 className="text-base font-medium text-gray-900 dark:text-white">
+                  Conversation
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handleDeleteConversation(currentConversationId, new Event('click'))}
+                    className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
+                    aria-label="Delete current conversation"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={handleNewChat}
+                    className="p-2 text-gray-400 hover:text-primary rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
+                    aria-label="New conversation"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            )}
+              
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {messages.map((message) => (
@@ -555,15 +674,15 @@ const Chat = () => {
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                     }`}>
                       <p className="text-base">{message.text}</p>
-                      {message.sentiment && (
-                        <span className={`inline-flex items-center mt-2 px-2 py-0.5 rounded text-xs font-medium ${
-                          message.sentiment === 'positive' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
-                          message.sentiment === 'negative' ? 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100' :
-                          'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100'
-                        }`}>
-                          {message.sentiment}
-                        </span>
-                      )}
+                        {message.sentiment && (
+                          <span className={`inline-flex items-center mt-2 px-2 py-0.5 rounded text-xs font-medium ${
+                            message.sentiment === 'positive' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' :
+                            message.sentiment === 'negative' ? 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100' :
+                            'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-100'
+                          }`}>
+                            {message.sentiment}
+                          </span>
+                        )}
                       <p className="text-xs text-gray-400 dark:text-gray-300 mt-2">
                         {new Date(message.timestamp).toLocaleTimeString()}
                       </p>
@@ -602,17 +721,17 @@ const Chat = () => {
               </div>
             )}
 
-            {/* Message input */}
+          {/* Message input */}
             <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-white dark:bg-gray-800">
               <form onSubmit={handleSubmit} className="flex items-center">
                 <div className="flex-1 min-w-0">
-                  <textarea
-                    rows="1"
+                <textarea
+                  rows="1"
                     className="block w-full resize-none border-0 bg-transparent p-0 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-0 sm:text-sm"
                     placeholder="Type your message..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   ></textarea>
                 </div>
                 <div className="flex-shrink-0 ml-4">
@@ -628,10 +747,14 @@ const Chat = () => {
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
+              </div>
+
+            {showFilloutForm && (
+              <FilloutForm onClose={() => setShowFilloutForm(false)} />
+            )}
         </div>
-      </Layout>
+      </div>
+    </Layout>
     </AuthWrapper>
   );
 };

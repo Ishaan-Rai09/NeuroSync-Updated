@@ -4,6 +4,10 @@
   "/_document": "pages/_document.js",
   "/chat": "pages/chat.js",
   "/profile": "pages/profile.js",
-  "/crisis": "pages/crisis.js",
-  "/api/user/emergency-contacts": "pages/api/user/emergency-contacts.js"
+  "/api/blockchain/token-balance": "pages/api/blockchain/token-balance.js",
+  "/api/pinata/history": "pages/api/pinata/history.js",
+  "/rewards": "pages/rewards.js",
+  "/api/blockchain/reward": "pages/api/blockchain/reward.js",
+  "/api/pinata/store": "pages/api/pinata/store.js",
+  "/api/blockchain/redeem": "pages/api/blockchain/redeem.js"
 }
