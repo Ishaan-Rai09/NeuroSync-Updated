@@ -45,13 +45,16 @@ export default async function handler(req, res) {
     
     // Check for transactions in our global temporary storage
     let transactions = [];
+    let foundHistory = false;
     
     try {
-      // First check if we have stored an IPFS hash for this user's history
-      const ipfsHash = global.userHistoryCids?.[walletAddress];
+      // First check if we have stored an IPFS hash for this specific user's history
+      // Make sure we're comparing addresses in a case-insensitive way
+      const normalizedWalletAddress = walletAddress.toLowerCase();
+      const ipfsHash = global.userHistoryCids?.[normalizedWalletAddress];
       
       if (ipfsHash) {
-        console.log(`Found history IPFS hash for ${walletAddress}: ${ipfsHash}`);
+        console.log(`Found history IPFS hash for ${normalizedWalletAddress}: ${ipfsHash}`);
         
         // Try to retrieve the content from Pinata
         const gatewayUrl = `https://gateway.pinata.cloud/ipfs/${ipfsHash}`;
@@ -59,72 +62,55 @@ export default async function handler(req, res) {
         try {
           const response = await axios.get(gatewayUrl);
           if (response.data && response.data.transactions) {
-            transactions = response.data.transactions;
-            console.log(`Retrieved ${transactions.length} transactions from Pinata`);
+            // Verify that the transactions are actually for this wallet
+            if (response.data.walletAddress.toLowerCase() === normalizedWalletAddress) {
+              transactions = response.data.transactions;
+              console.log(`Retrieved ${transactions.length} transactions from Pinata for ${normalizedWalletAddress}`);
+              foundHistory = true;
+            } else {
+              console.error('Wallet address mismatch in retrieved data');
+              // We'll continue and try our in-memory backup
+            }
           }
         } catch (error) {
           console.error('Error fetching from Pinata gateway:', error);
           // If we can't retrieve from Pinata, try our in-memory backup
-          if (global.userTransactions?.[walletAddress]) {
-            transactions = global.userTransactions[walletAddress];
-            console.log(`Retrieved ${transactions.length} transactions from memory`);
-          }
         }
-      } else {
-        console.log('No history IPFS hash found, checking if we have transactions in memory');
-        // Try to load from global temporary storage
-        if (global.userTransactions?.[walletAddress]) {
-          transactions = global.userTransactions[walletAddress];
-          console.log(`Retrieved ${transactions.length} transactions from memory`);
-        } else {
-          // If we don't have anything, provide sample data for new users
-          console.log('No transactions found, providing initial data for new user');
-          
-          // For new users, we want to show an initial transaction of 100 NEURO tokens
-          transactions = [
-            {
-              id: `initial-${walletAddress}`,
-              type: 'INITIAL',
-              amount: '100',
-              description: 'Welcome Bonus',
-              timestamp: new Date().toISOString()
-            }
-          ];
-          
-          // Store this initial transaction
-          if (!global.userTransactions) {
-            global.userTransactions = {};
-          }
-          global.userTransactions[walletAddress] = transactions;
-          
-          // Store on Pinata too (fire and forget)
-          try {
-            const initialData = {
-              walletAddress,
-              type: 'INITIAL',
-              amount: '100',
-              description: 'Welcome Bonus',
-              timestamp: new Date().toISOString()
-            };
-            
-            // Store through our own API endpoint
-            fetch('/api/pinata/store', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(initialData),
-            }).catch(e => console.error('Failed to record initial balance:', e));
-          } catch (err) {
-            console.error('Failed to store initial balance on Pinata:', err);
-          }
+      }
+      
+      // If we couldn't get from IPFS, try our in-memory backup
+      if (!foundHistory && global.userTransactions) {
+        // Ensure we're looking at the right wallet's transactions
+        const userTransactions = global.userTransactions[normalizedWalletAddress] || [];
+        
+        // Filter to make sure we only return transactions for this specific wallet
+        const filteredTransactions = userTransactions.filter(tx => 
+          tx.walletAddress && tx.walletAddress.toLowerCase() === normalizedWalletAddress
+        );
+        
+        if (filteredTransactions.length > 0) {
+          transactions = filteredTransactions;
+          console.log(`Retrieved ${transactions.length} transactions from memory for ${normalizedWalletAddress}`);
+          foundHistory = true;
         }
+      }
+      
+      // If we still don't have history, this is a new user
+      if (!foundHistory) {
+        console.log('No transaction history found for this wallet address');
+        return res.status(404).json({
+          success: false,
+          error: 'No transaction history found for this wallet address - this appears to be a new user',
+          isNewUser: true
+        });
       }
       
     } catch (error) {
       console.error('Error retrieving history:', error);
-      // If we fail to retrieve history, use an empty array
-      transactions = [];
+      return res.status(500).json({
+        success: false,
+        error: `Error retrieving transaction history: ${error.message}`
+      });
     }
     
     return res.status(200).json({
@@ -132,8 +118,8 @@ export default async function handler(req, res) {
       walletAddress,
       transactions,
       debug: {
-        hasIpfsHash: !!global.userHistoryCids?.[walletAddress],
-        hasTransactions: !!global.userTransactions?.[walletAddress],
+        hasIpfsHash: !!global.userHistoryCids?.[walletAddress.toLowerCase()],
+        hasTransactions: !!global.userTransactions?.[walletAddress.toLowerCase()],
         transactionCount: transactions.length
       }
     });

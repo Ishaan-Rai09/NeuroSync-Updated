@@ -16,11 +16,5 @@
     "files": [
       "static/chunks/_pages-dir-browser_node_modules_next_dist_pages__error_js.js"
     ]
-  },
-  "pages\\profile.js -> ../components/blockchain/TokenStats": {
-    "id": "pages\\profile.js -> ../components/blockchain/TokenStats",
-    "files": [
-      "static/chunks/_pages-dir-browser_components_blockchain_TokenStats_js.js"
-    ]
   }
 }

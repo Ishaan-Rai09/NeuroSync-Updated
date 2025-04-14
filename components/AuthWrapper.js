@@ -21,25 +21,28 @@ const AuthWrapper = ({ children }) => {
           if (parsedUser && parsedUser.id) {
             setIsAuthenticated(true);
           } else {
-            // Invalid user data, redirect to signup
-            router.push('/signup');
+            console.error('Invalid user data structure, missing ID:', parsedUser);
+            // Clear invalid user data
+            localStorage.removeItem('user');
+            router.push('/login');
           }
         } catch (error) {
           console.error('Error parsing user data:', error);
           // Handle invalid user data in localStorage
           localStorage.removeItem('user');
-          router.push('/signup');
+          router.push('/login');
         }
       } else {
-        // No user data found, redirect to signup
-        router.push('/signup');
+        // No user data found, redirect to login
+        console.log('No user data found, redirecting to login');
+        router.push('/login');
       }
       
       setLoading(false);
     }
   }, [router]);
 
-  // Show a blank screen while checking authentication
+  // Show a loading spinner while checking authentication
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">

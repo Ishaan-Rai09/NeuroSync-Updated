@@ -115,27 +115,39 @@ export default async function handler(req, res) {
  */
 async function updateUserTransactionHistory(walletAddress, newTransaction) {
   try {
-    // Create a key for the user's transaction history file
-    const userHistoryKey = `neuro_${walletAddress.toLowerCase()}_transactions`;
+    // Normalize the wallet address to lowercase for consistent lookup
+    const normalizedWalletAddress = walletAddress.toLowerCase();
     
-    console.log('Updating transaction history for wallet:', walletAddress);
+    // Create a key for the user's transaction history file
+    const userHistoryKey = `neuro_${normalizedWalletAddress}_transactions`;
+    
+    console.log('Updating transaction history for wallet:', normalizedWalletAddress);
     
     // For a production app, you would retrieve the existing history
     // and append the new transaction
     // For this example, we'll use global variable storage
     
     // Try to load existing transactions from global storage (this is temporary, in a real app use a database)
-    let transactions = global.userTransactions?.[walletAddress] || [];
-    transactions = [newTransaction, ...transactions];
-    
-    // Store in global for this session (temporary solution)
     if (!global.userTransactions) {
       global.userTransactions = {};
     }
-    global.userTransactions[walletAddress] = transactions;
+    
+    let transactions = global.userTransactions[normalizedWalletAddress] || [];
+    
+    // Ensure the transaction has the normalized wallet address
+    const transactionWithNormalizedWallet = {
+      ...newTransaction,
+      walletAddress: normalizedWalletAddress
+    };
+    
+    // Add the new transaction at the beginning of the array
+    transactions = [transactionWithNormalizedWallet, ...transactions];
+    
+    // Store in global for this session (temporary solution)
+    global.userTransactions[normalizedWalletAddress] = transactions;
     
     const historyData = {
-      walletAddress,
+      walletAddress: normalizedWalletAddress,
       lastUpdated: new Date().toISOString(),
       transactions
     };
@@ -144,7 +156,7 @@ async function updateUserTransactionHistory(walletAddress, newTransaction) {
     const metadata = {
       name: `${userHistoryKey}.json`,
       keyvalues: {
-        walletAddress: walletAddress,
+        walletAddress: normalizedWalletAddress,
         lastUpdated: new Date().toISOString()
       }
     };
@@ -193,7 +205,7 @@ async function updateUserTransactionHistory(walletAddress, newTransaction) {
     if (!global.userHistoryCids) {
       global.userHistoryCids = {};
     }
-    global.userHistoryCids[walletAddress] = ipfsHash;
+    global.userHistoryCids[normalizedWalletAddress] = ipfsHash;
     
     return ipfsHash;
   } catch (error) {

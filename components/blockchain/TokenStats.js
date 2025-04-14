@@ -27,6 +27,16 @@ const TokenStats = () => {
     connectWallet 
   } = useWalletAuth();
   
+  // Reset data when wallet address changes
+  useEffect(() => {
+    if (walletAddress) {
+      // Clear previous account data when switching wallets
+      setTokenBalance(DEFAULT_INITIAL_BALANCE);
+      setTokenHistory([]);
+      setError(null);
+    }
+  }, [walletAddress]);
+  
   // Merchandise options
   const merchandiseOptions = [
     { 
@@ -34,21 +44,21 @@ const TokenStats = () => {
       name: 'NeuroSync T-Shirt', 
       description: 'Comfortable cotton t-shirt with NeuroSync logo',
       cost: 100,
-      imageUrl: '/images/merch/tshirt.jpg'
+      imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'
     },
     { 
       id: 'water_bottle', 
       name: 'NeuroSync Water Bottle', 
       description: 'Stainless steel water bottle with NeuroSync branding',
       cost: 75,
-      imageUrl: '/images/merch/bottle.jpg'
+      imageUrl: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'
     },
     { 
       id: 'key_ring', 
       name: 'NeuroSync Key Ring', 
       description: 'Durable key ring with NeuroSync logo',
       cost: 50,
-      imageUrl: '/images/merch/keyring.jpg'
+      imageUrl: 'https://images.unsplash.com/photo-1541421912826-96bb0979c6c3?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'
     }
   ];
   
@@ -72,6 +82,9 @@ const TokenStats = () => {
   
   // Fetch token balance and history
   useEffect(() => {
+    // Initialize merchandise options immediately to prevent UI issues
+    setRedeemOptions(merchandiseOptions);
+    
     const fetchTokenBalance = async () => {
       if (!isConnected || !walletAddress) return;
       
@@ -79,102 +92,157 @@ const TokenStats = () => {
         setIsLoading(true);
         setError(null);
         
-        // API call to get token balance
-        const response = await fetch(`/api/blockchain/token-balance?walletAddress=${walletAddress}`);
-        const data = await response.json();
+        // API call to get token balance and transaction history
+        const response = await fetch(`/api/pinata/history?walletAddress=${walletAddress}`);
         
-        if (!data.success) {
-          throw new Error(data.error || 'Failed to fetch token balance');
-        }
-        
-        // If balance is 0 or not set, use default 100 for new users
-        if (!data.balance || data.balance === '0') {
-          setTokenBalance(DEFAULT_INITIAL_BALANCE);
+        // If response is 404, it might be a new user
+        if (response.status === 404) {
+          const errorData = await response.json();
           
-          // Record the initial balance to Pinata
-          const initialBalanceData = {
-            type: 'INITIAL',
-            amount: DEFAULT_INITIAL_BALANCE,
-            description: 'Welcome Bonus',
-            timestamp: new Date().toISOString(),
-            walletAddress
-          };
-          
-          console.log('Recording initial balance for new user');
-          
-          try {
-            const storeResponse = await fetch('/api/pinata/store', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(initialBalanceData),
-            });
-            
-            if (storeResponse.ok) {
-              const storeData = await storeResponse.json();
-              console.log('Initial balance recorded on Pinata:', storeData);
-            } else {
-              console.error('Failed to record initial balance on Pinata:', await storeResponse.text());
-            }
-          } catch (err) {
-            console.error('Failed to record initial balance:', err);
+          // Check if this is a new user error
+          if (errorData.isNewUser) {
+            console.log('New user detected, creating initial balance');
+            await createInitialBalanceForNewUser();
+            return;
           }
-        } else {
-          setTokenBalance(data.balance);
+          
+          // Otherwise, it's a different 404 error
+          throw new Error(errorData.error || 'Failed to fetch transaction history');
         }
         
-        // Fetch transaction history from Pinata
-        console.log('Fetching transaction history from Pinata');
-        const historyResponse = await fetch(`/api/pinata/history?walletAddress=${walletAddress}`);
-        
-        if (!historyResponse.ok) {
-          console.error('Failed to fetch history:', await historyResponse.text());
+        // For other non-OK responses, throw an error
+        if (!response.ok) {
+          console.error('Failed to fetch history:', await response.text());
           throw new Error('Failed to fetch transaction history');
         }
         
-        const historyData = await historyResponse.json();
+        const historyData = await response.json();
         
         if (!historyData.success) {
           console.error('History API returned error:', historyData.error);
           throw new Error(historyData.error || 'Failed to fetch transaction history');
         }
         
-        console.log('Received transaction history:', historyData);
+        // Check if user has any transactions
+        const hasTransactions = historyData.transactions && 
+                               Array.isArray(historyData.transactions) && 
+                               historyData.transactions.length > 0;
         
-        if (historyData.transactions && Array.isArray(historyData.transactions)) {
+        if (hasTransactions) {
+          // User has transaction history, calculate balance from transactions
           setTokenHistory(historyData.transactions);
           
-          // Calculate balance from transactions if no balance provided
-          if ((!data.balance || data.balance === '0') && historyData.transactions.length > 0) {
-            let calculatedBalance = 0;
-            historyData.transactions.forEach(tx => {
-              calculatedBalance += parseFloat(tx.amount || '0');
-            });
-            
-            if (calculatedBalance > 0) {
-              setTokenBalance(calculatedBalance.toString());
-            }
-          }
+          // Calculate accurate balance from all transactions
+          let calculatedBalance = 0;
+          historyData.transactions.forEach(tx => {
+            calculatedBalance += parseFloat(tx.amount || '0');
+          });
+          
+          // Set the calculated balance
+          setTokenBalance(calculatedBalance.toString());
         } else {
-          // If no transactions, add initial welcome bonus transaction
-          const initialTransaction = {
-            id: `initial-${walletAddress}`,
-            type: 'INITIAL',
-            amount: DEFAULT_INITIAL_BALANCE,
-            description: 'Welcome Bonus',
-            timestamp: new Date().toISOString()
-          };
-          setTokenHistory([initialTransaction]);
+          // No transactions found for this wallet - create initial balance
+          await createInitialBalanceForNewUser();
         }
-        
-        setRedeemOptions(merchandiseOptions);
         
       } catch (err) {
         console.error('Error fetching token data:', err);
         setError(err.message || 'Failed to load token data');
+        
+        // Ensure redeem options are set even if we hit an error
+        setRedeemOptions(merchandiseOptions);
+        
+        // If we failed to load transaction history, at least show the initial balance
+        if (tokenHistory.length === 0) {
+          setTokenBalance(DEFAULT_INITIAL_BALANCE);
+        }
       } finally {
         setIsLoading(false);
+      }
+    };
+    
+    // Helper function to create initial balance for new users
+    const createInitialBalanceForNewUser = async () => {
+      try {
+        // This is a new user with no transaction history
+        console.log('Creating initial balance for new user:', walletAddress);
+        setTokenBalance(DEFAULT_INITIAL_BALANCE);
+        
+        // Always set redeem options for new users
+        setRedeemOptions(merchandiseOptions);
+        
+        // Record the initial balance to Pinata
+        const initialBalanceData = {
+          type: 'INITIAL',
+          amount: DEFAULT_INITIAL_BALANCE,
+          description: 'Welcome Bonus',
+          timestamp: new Date().toISOString(),
+          walletAddress: walletAddress.toLowerCase() // Ensure wallet address is included and normalized
+        };
+        
+        console.log('Recording initial balance:', initialBalanceData);
+        
+        const storeResponse = await fetch('/api/pinata/store', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(initialBalanceData),
+        });
+        
+        if (storeResponse.ok) {
+          const storeData = await storeResponse.json();
+          console.log('Initial balance recorded on Pinata:', storeData);
+          
+          // Add initial welcome bonus transaction to history
+          const initialTransaction = {
+            id: `initial-${walletAddress.toLowerCase()}`,
+            type: 'INITIAL',
+            amount: DEFAULT_INITIAL_BALANCE,
+            description: 'Welcome Bonus',
+            timestamp: new Date().toISOString(),
+            walletAddress: walletAddress.toLowerCase()
+          };
+          setTokenHistory([initialTransaction]);
+          
+          toast.success('Welcome! You received 100 NEURO tokens as a welcome bonus.');
+        } else {
+          const errorText = await storeResponse.text();
+          console.error('Failed to record initial balance on Pinata:', errorText);
+          // Continue even if Pinata storage fails - the UI will still show the initial balance
+          
+          // Add initial welcome bonus transaction to history even if Pinata fails
+          const initialTransaction = {
+            id: `initial-${walletAddress.toLowerCase()}`,
+            type: 'INITIAL',
+            amount: DEFAULT_INITIAL_BALANCE,
+            description: 'Welcome Bonus',
+            timestamp: new Date().toISOString(),
+            walletAddress: walletAddress.toLowerCase()
+          };
+          setTokenHistory([initialTransaction]);
+          
+          toast.success('Welcome! You received 100 NEURO tokens as a welcome bonus.');
+          toast.error('However, there was an issue saving your transaction. Please try refreshing the page.');
+        }
+      } catch (err) {
+        console.error('Failed to record initial balance:', err);
+        // Set the token balance anyway so the user can see it
+        setTokenBalance(DEFAULT_INITIAL_BALANCE);
+        
+        // Create a local record even if the API failed
+        const initialTransaction = {
+          id: `initial-${walletAddress.toLowerCase()}`,
+          type: 'INITIAL',
+          amount: DEFAULT_INITIAL_BALANCE,
+          description: 'Welcome Bonus (Local Only)',
+          timestamp: new Date().toISOString(),
+          walletAddress: walletAddress.toLowerCase()
+        };
+        setTokenHistory([initialTransaction]);
+        
+        toast.success('Welcome! You received 100 NEURO tokens as a welcome bonus.');
+        toast.error('However, there was an issue saving your transaction. Please try refreshing the page.');
       }
     };
     
@@ -276,7 +344,12 @@ const TokenStats = () => {
         const pinataData = await pinataResponse.json();
         console.log('Transaction stored on Pinata:', pinataData);
         
-        if (!pinataData.success) {
+        if (pinataData.success && pinataData.ipfsHash) {
+          // Update receipt with IPFS hash
+          receipt.ipfsHash = pinataData.ipfsHash;
+          setReceiptData({...receipt});
+          console.log('Receipt data updated with IPFS hash:', receipt);
+        } else {
           console.error('Pinata API returned error:', pinataData.error);
           toast.error('Transaction recorded, but failed to store on Pinata');
         }
@@ -357,42 +430,48 @@ const TokenStats = () => {
       <RewardActivities onRewardEarned={handleRewardEarned} />
       
       {/* Merchandise Redemption */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Redeem Merchandise</h3>
-        <p className="text-gray-600 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Redeem Merchandise</h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-4">
           Use your NEURO tokens to get exclusive NeuroSync merchandise!
         </p>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {redeemOptions.map((option) => (
-            <div
-              key={option.id}
-              className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                selectedRedeemOption?.id === option.id
-                  ? 'border-indigo-500 bg-indigo-50'
-                  : 'border-gray-200 hover:border-indigo-300'
-              }`}
-              onClick={() => handleRedeemSelect(option)}
-            >
-              <div className="flex flex-col h-full">
-                <div className="flex justify-between mb-2">
-                  <h4 className="font-medium text-gray-800">{option.name}</h4>
-                  <span className="text-indigo-600 font-bold">{option.cost} {tokenSymbol}</span>
-                </div>
-                <p className="text-gray-600 text-sm mb-2">{option.description}</p>
-                {option.imageUrl && (
-                  <div className="mt-auto">
-                    <img 
-                      src={option.imageUrl} 
-                      alt={option.name} 
-                      className="w-full h-24 object-cover rounded" 
-                    />
+        {redeemOptions.length === 0 ? (
+          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+            <p className="text-yellow-700 dark:text-yellow-300">Loading redemption options...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {redeemOptions.map((option) => (
+              <div
+                key={option.id}
+                className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                  selectedRedeemOption?.id === option.id
+                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600'
+                }`}
+                onClick={() => handleRedeemSelect(option)}
+              >
+                <div className="flex flex-col h-full">
+                  <div className="flex justify-between mb-2">
+                    <h4 className="font-medium text-gray-800 dark:text-white">{option.name}</h4>
+                    <span className="text-indigo-600 dark:text-indigo-400 font-bold">{option.cost} {tokenSymbol}</span>
                   </div>
-                )}
+                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-2">{option.description}</p>
+                  {option.imageUrl && (
+                    <div className="mt-auto">
+                      <img 
+                        src={option.imageUrl} 
+                        alt={option.name} 
+                        className="w-full h-24 object-cover rounded" 
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
         
         <div className="mt-6">
           <button
@@ -400,7 +479,7 @@ const TokenStats = () => {
             disabled={!selectedRedeemOption || isRedeeming || parseFloat(tokenBalance) < (selectedRedeemOption?.cost || 0)}
             className={`w-full py-3 px-4 rounded-lg font-medium ${
               !selectedRedeemOption || isRedeeming || parseFloat(tokenBalance) < (selectedRedeemOption?.cost || 0)
-                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 : 'bg-indigo-600 text-white hover:bg-indigo-700'
             }`}
           >
@@ -415,47 +494,47 @@ const TokenStats = () => {
       </div>
       
       {/* Transaction History */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-xl font-semibold text-gray-800 mb-4">Transaction History</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Transaction History</h3>
         
         {tokenHistory.length === 0 ? (
-          <p className="text-gray-600">No transactions yet.</p>
+          <p className="text-gray-600 dark:text-gray-300">No transactions yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="border-b">
-                  <th className="py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                  <th className="py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                  <th className="py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                  <th className="py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <tr className="border-b dark:border-gray-700">
+                  <th className="py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                  <th className="py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                  <th className="py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Description</th>
+                  <th className="py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
                 </tr>
               </thead>
               <tbody>
                 {tokenHistory.map((tx, index) => (
-                  <tr key={index} className="border-b">
+                  <tr key={index} className="border-b dark:border-gray-700">
                     <td className="py-3 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         tx.type === 'REWARD' 
-                          ? 'bg-green-100 text-green-800' 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' 
                           : tx.type === 'REDEEM' 
-                            ? 'bg-red-100 text-red-800'
+                            ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
                             : tx.type === 'INITIAL'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800'
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                       }`}>
                         {tx.type}
                       </span>
                     </td>
                     <td className="py-3 whitespace-nowrap">
                       <span className={`font-medium ${
-                        parseFloat(tx.amount) >= 0 ? 'text-green-600' : 'text-red-600'
+                        parseFloat(tx.amount) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                       }`}>
                         {parseFloat(tx.amount) >= 0 ? '+' : ''}{tx.amount}
                       </span>
                     </td>
-                    <td className="py-3">{tx.description}</td>
-                    <td className="py-3 whitespace-nowrap text-sm text-gray-500">
+                    <td className="py-3 text-gray-800 dark:text-gray-300">{tx.description}</td>
+                    <td className="py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {new Date(tx.timestamp).toLocaleString()}
                     </td>
                   </tr>
