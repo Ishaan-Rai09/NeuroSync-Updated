@@ -4,13 +4,8 @@
   "/_document": "pages/_document.js",
   "/chat": "pages/chat.js",
   "/resources": "pages/resources.js",
-  "/checkin": "pages/checkin.js",
-  "/rewards": "pages/rewards.js",
-  "/api/blockchain/redeem": "pages/api/blockchain/redeem.js",
-  "/api/blockchain/reward": "pages/api/blockchain/reward.js",
-  "/api/pinata/store": "pages/api/pinata/store.js",
-  "/api/pinata/history": "pages/api/pinata/history.js",
   "/resources/articles/basics": "pages/resources/articles/basics.js",
   "/api/conversations": "pages/api/conversations.js",
-  "/": "pages/index.js"
+  "/rewards": "pages/rewards.js",
+  "/api/ai/local-chat": "pages/api/ai/local-chat.js"
 }

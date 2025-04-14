@@ -3,7 +3,6 @@ import Link from 'next/link';
 import Layout from '../components/Layout';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import PersonalizedRecommendations from '../components/PersonalizedRecommendations';
 
 const Home = () => {
   const router = useRouter();
@@ -85,13 +84,6 @@ const Home = () => {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Personalized Recommendations Section */}
-      <section className="py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <PersonalizedRecommendations emotionalState="neutral" />
         </div>
       </section>
 

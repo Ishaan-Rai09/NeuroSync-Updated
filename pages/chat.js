@@ -8,6 +8,7 @@ import Recommendations from '../components/Recommendations';
 import AuthWrapper from '../components/AuthWrapper';
 import FilloutForm from '../components/FilloutForm';
 import Switch from '../components/Switch';
+import PersonalizedRecommendations from '../components/PersonalizedRecommendations';
 
 const Chat = () => {
   const router = useRouter();
@@ -19,6 +20,7 @@ const Chat = () => {
   const [activeChat, setActiveChat] = useState('new');
   const [currentEmotionalState, setCurrentEmotionalState] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
+  const [showRecommendationsPopup, setShowRecommendationsPopup] = useState(false);
   const [chatHistory, setChatHistory] = useState([]);
   const [isUsingLocalLlama, setIsUsingLocalLlama] = useState(true); // Default to using local LLaMA
   const [conversations, setConversations] = useState([]);
@@ -452,6 +454,13 @@ const Chat = () => {
     }
   };
 
+  // Update sentiment handling to show popup
+  useEffect(() => {
+    if (currentEmotionalState === 'negative') {
+      setShowRecommendationsPopup(true);
+    }
+  }, [currentEmotionalState]);
+
   return (
     <AuthWrapper>
     <Layout title="Chat | NeuroSync">
@@ -711,17 +720,7 @@ const Chat = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Recommendations area */}
-            {recommendations.length > 0 && (
-              <div className="px-6 pb-4">
-                <Recommendations 
-                  recommendations={recommendations} 
-                  emotionalState={currentEmotionalState} 
-                />
-              </div>
-            )}
-
-          {/* Message input */}
+            {/* Message input */}
             <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-white dark:bg-gray-800">
               <form onSubmit={handleSubmit} className="flex items-center">
                 <div className="flex-1 min-w-0">
@@ -751,6 +750,46 @@ const Chat = () => {
 
             {showFilloutForm && (
               <FilloutForm onClose={() => setShowFilloutForm(false)} />
+            )}
+
+            {/* Recommendations Popup */}
+            {showRecommendationsPopup && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                  <div className="p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">We noticed you might be feeling down</h2>
+                      <button 
+                        onClick={() => setShowRecommendationsPopup(false)}
+                        className="text-gray-400 hover:text-gray-500 focus:outline-none"
+                      >
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="mb-6">
+                      <PersonalizedRecommendations emotionalState={currentEmotionalState || 'neutral'} />
+                    </div>
+                    {recommendations.length > 0 && false && (
+                      <div className="mb-6">
+                        <Recommendations 
+                          recommendations={recommendations} 
+                          emotionalState={currentEmotionalState} 
+                        />
+                      </div>
+                    )}
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => setShowRecommendationsPopup(false)}
+                        className="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-indigo-700 focus:outline-none"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
         </div>
       </div>
