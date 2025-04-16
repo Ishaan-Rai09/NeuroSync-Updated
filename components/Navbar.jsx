@@ -42,7 +42,15 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <Link href="/" className="text-2xl font-bold text-primary dark:text-white">
+              <Link 
+                href="/" 
+                className="text-2xl font-bold text-primary dark:text-white"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('intentionalHomeNavigation', 'true');
+                  }
+                }}
+              >
                 NeuroSync
               </Link>
             </div>
@@ -64,6 +72,9 @@ const Navbar = () => {
               </Link>
               <Link href="/rewards" className="text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-primary text-sm font-medium transition-colors duration-200">
                 Rewards
+              </Link>
+              <Link href="/chat" className="text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 border-transparent hover:border-primary text-sm font-medium transition-colors duration-200">
+                Chat
               </Link>
             </div>
           </div>
@@ -240,6 +251,9 @@ const Navbar = () => {
             </Link>
             <Link href="/rewards" className="block pl-3 pr-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent hover:border-primary text-base font-medium">
               Rewards
+            </Link>
+            <Link href="/chat" className="block pl-3 pr-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent hover:border-primary text-base font-medium">
+              Chat
             </Link>
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200 dark:border-gray-700">

@@ -3,9 +3,10 @@
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
   "/chat": "pages/chat.js",
-  "/resources": "pages/resources.js",
-  "/resources/articles/basics": "pages/resources/articles/basics.js",
+  "/profile": "pages/profile.js",
+  "/": "pages/index.js",
+  "/api/ai/local-chat": "pages/api/ai/local-chat.js",
   "/api/conversations": "pages/api/conversations.js",
-  "/rewards": "pages/rewards.js",
-  "/api/ai/local-chat": "pages/api/ai/local-chat.js"
+  "/crisis": "pages/crisis.js",
+  "/api/user/emergency-contacts": "pages/api/user/emergency-contacts.js"
 }

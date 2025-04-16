@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Layout from '../components/Layout';
+import ChatLayout from '../components/ChatLayout';
 import { toast } from 'react-toastify';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
@@ -9,6 +9,7 @@ import AuthWrapper from '../components/AuthWrapper';
 import FilloutForm from '../components/FilloutForm';
 import Switch from '../components/Switch';
 import PersonalizedRecommendations from '../components/PersonalizedRecommendations';
+import Link from 'next/link';
 
 const Chat = () => {
   const router = useRouter();
@@ -463,18 +464,22 @@ const Chat = () => {
 
   return (
     <AuthWrapper>
-    <Layout title="Chat | NeuroSync">
+    <ChatLayout title="NeuroSync Chat">
       <div className="flex h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900">
         {/* Sidebar */}
         <div className="hidden md:flex md:w-72 md:flex-col">
           <div className="flex flex-col flex-grow pt-5 bg-white dark:bg-gray-800 overflow-y-auto border-r border-gray-200 dark:border-gray-700">
             <div className="flex items-center flex-shrink-0 px-4">
-              <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
-                <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4.31802 6.31802C2.56066 8.07538 2.56066 10.9246 4.31802 12.682L12.0001 20.364L19.682 12.682C21.4393 10.9246 21.4393 8.07538 19.682 6.31802C17.9246 4.56066 15.0754 4.56066 13.318 6.31802L12.0001 7.63609L10.682 6.31802C8.92462 4.56066 6.07538 4.56066 4.31802 6.31802Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <h2 className="ml-3 text-2xl font-semibold text-gray-900 dark:text-white">NeuroSync</h2>
+              <Link href="/">
+                <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center">
+                  <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4.31802 6.31802C2.56066 8.07538 2.56066 10.9246 4.31802 12.682L12.0001 20.364L19.682 12.682C21.4393 10.9246 21.4393 8.07538 19.682 6.31802C17.9246 4.56066 15.0754 4.56066 13.318 6.31802L12.0001 7.63609L10.682 6.31802C8.92462 4.56066 6.07538 4.56066 4.31802 6.31802Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </Link>
+              <Link href="/">
+                <h2 className="ml-3 text-2xl font-semibold text-gray-900 dark:text-white">NeuroSync</h2>
+              </Link>
             </div>
             <div className="mt-8 flex-grow flex flex-col">
               <nav className="flex-1 px-4 space-y-3">
@@ -793,7 +798,7 @@ const Chat = () => {
             )}
         </div>
       </div>
-    </Layout>
+    </ChatLayout>
     </AuthWrapper>
   );
 };

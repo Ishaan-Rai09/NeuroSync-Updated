@@ -8,8 +8,9 @@ const Home = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is already logged in
-    if (typeof window !== 'undefined') {
+    // Check if user is already logged in, but only if coming from initial page load
+    // Don't redirect if the user specifically navigated to the home page
+    if (typeof window !== 'undefined' && !sessionStorage.getItem('intentionalHomeNavigation')) {
       const userData = localStorage.getItem('user');
       if (userData) {
         try {
@@ -25,6 +26,8 @@ const Home = () => {
         }
       }
     }
+    // Set flag to indicate user has visited the home page intentionally
+    sessionStorage.setItem('intentionalHomeNavigation', 'true');
   }, [router]);
 
   return (
@@ -53,7 +56,9 @@ const Home = () => {
                   </div>
                   <div className="mt-3 sm:mt-0 sm:ml-3">
                     <Link 
-                      href="/demo" 
+                      href="https://www.youtube.com/watch?v=5ZdfdZOaaME"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-indigo-100 hover:bg-indigo-200 dark:text-white dark:bg-gray-700 dark:hover:bg-gray-600 md:py-4 md:text-lg md:px-10 transition duration-150 ease-in-out"
                     >
                       <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
