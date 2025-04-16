@@ -4,17 +4,30 @@ NeuroSync is an advanced AI-powered mental health platform that provides persona
 
 ## Features
 
-- 🤖 AI Therapy Chat powered by LLaMA 3
+- 🤖 AI Therapy Chat powered by LLaMA 3.2
 - 📊 Real-time Emotion Analysis
-- 🆘 24/7 Crisis Support
+- 🆘 24/7 Crisis Support with Emergency Contact Integration
 - 🎯 Personalized Mental Health Guidance
-- 📱 Responsive Design with Dark Mode
-- 🔒 Secure User Authentication
-- 📈 Progress Tracking
+- 📱 Responsive Design with Dark/Light Mode
+- 🔒 Enterprise-Grade Security & Privacy
+- 📈 Progress Tracking and Emotional Analytics
+- 🎬 Integrated Demo Video
+- 💻 Comprehensive Help Center
+- 🔐 Thorough Security Documentation
+
+## Latest Updates
+
+- **YouTube Demo Integration**: Watch Demo button on homepage links directly to our YouTube tutorial
+- **Help Center**: Comprehensive support resources at `/help`
+- **Security Page**: Detailed security documentation at `/security`
+- **Footer Removed from Chat**: Enhanced UI experience in the chat interface
+- **Improved Navigation**: Fixed NeuroSync logo to properly navigate to the home page
+- **Dark/Light Mode Support**: Complete theme support across all pages
+- **Pattern Matching Fallback**: Graceful degradation when AI model times out
 
 ## AI Integration
 
-NeuroSync uses a local LLaMA 3 model for intelligent conversation and emotional analysis:
+NeuroSync uses a local LLaMA 3.2 model for intelligent conversation and emotional analysis:
 
 - **NLP Processing Pipeline**: User messages are processed through a multi-step pipeline:
   1. Sentiment analysis to detect emotional state
@@ -28,8 +41,10 @@ NeuroSync uses a local LLaMA 3 model for intelligent conversation and emotional 
 
 - **Real-time Emotional Tracking**: Analysis of user messages to identify emotional patterns and provide targeted support.
 
+- **Crisis Detection**: Automatic detection of crisis situations with emergency contact integration
+
 To use the AI features, you need to:
-1. Set up the local LLaMA 3 instance
+1. Set up the local LLaMA 3.2 instance
 2. Configure the connection in the `.env.local` file
 3. Restart the application
 
@@ -57,7 +72,9 @@ To use the AI features in NeuroSync, you need to set up a local LLaMA instance:
    npm run dev
    ```
 
-**Note for Development**: NeuroSync includes fallback functionality with simulated AI responses when the LLaMA model is not available.
+**Note for Development**: 
+- NeuroSync includes fallback functionality with simulated AI responses when the LLaMA model is not available.
+- Timeout thresholds can be adjusted in `local-ai-middleware.js` if you experience timeout issues on slower hardware.
 
 ## Prerequisites
 
@@ -102,11 +119,20 @@ The application will be available at `http://localhost:3000`
 ```
 NeuroSync-AI-Frontend/
 ├── components/         # Reusable React components
-├── pages/             # Next.js pages and API routes
-├── public/            # Static assets
-├── styles/           # Global styles and Tailwind config
-├── lib/              # Utility functions and database connection
-└── package.json      # Project dependencies and scripts
+│   ├── Layout.jsx      # Standard layout with footer
+│   ├── ChatLayout.jsx  # Special layout for chat (no footer)
+│   ├── Navbar.jsx      # Navigation component
+│   └── Footer.jsx      # Footer component
+├── pages/              # Next.js pages and API routes
+│   ├── index.js        # Home page
+│   ├── chat.js         # AI Chat interface
+│   ├── help.js         # Help Center
+│   ├── security.js     # Security information
+│   └── api/            # Backend API endpoints
+├── public/             # Static assets
+├── styles/             # Global styles and Tailwind config
+├── lib/                # Utility functions and database connection
+└── package.json        # Project dependencies and scripts
 ```
 
 ## Key Technologies
@@ -123,9 +149,10 @@ NeuroSync-AI-Frontend/
   - bcrypt for password hashing
 
 - **AI Integration:**
-  - LLaMA 3 for conversational AI
+  - LLaMA 3.2 for conversational AI
   - Custom emotion analysis algorithms
   - Real-time mood detection
+  - Crisis detection system
 
 ## Available Scripts
 
@@ -148,6 +175,22 @@ This project uses Pinata IPFS for conversation storage. No MongoDB required.
 - User profile data can be stored in local storage or on Pinata
 - No database setup required
 
+## Special Pages
+
+- **Home Page (`/`)**: Landing page with YouTube demo video integration
+- **Chat Interface (`/chat`)**: AI conversation interface with emergency support
+- **Help Center (`/help`)**: Comprehensive support resources
+- **Security Page (`/security`)**: Detailed information about our security practices
+- **Crisis Support (`/crisis`)**: Emergency resources and support contacts
+
+## Performance Considerations
+
+- **AI Model Performance**: The LLaMA 3.2 model can be resource-intensive. For optimal performance:
+  - Use a machine with at least 16GB RAM
+  - Consider a system with GPU acceleration
+  - Adjust timeout thresholds in code if running on slower hardware
+  - Use the built-in model switching to toggle between local LLaMA and cloud-based AI
+
 ## Deployment
 
 To deploy the application:
@@ -161,6 +204,11 @@ npm run build
 ```bash
 npm start
 ```
+
+For production deployment, consider:
+- Using a managed service like Vercel or Netlify
+- Setting up a dedicated Ollama server on a powerful instance
+- Implementing a CDN for static assets
 
 ## Contributing
 
@@ -176,10 +224,18 @@ npm start
 - JWT tokens are used for session management
 - Environment variables are used for sensitive data
 - API routes are protected with authentication middleware
+- End-to-end encryption for sensitive communications
+- HIPAA and GDPR compliance measures
+- Regular security audits
+
+For full details on our security practices, visit the Security page at `/security`.
 
 ## Support
 
-For support, email support@neurosync.ai or open an issue in the repository.
+For help with NeuroSync:
+- Visit our Help Center at `/help`
+- Email support@neurosync.ai
+- Open an issue in the repository
 
 ## License
 
@@ -189,6 +245,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Next.js team for the amazing framework
 - TailwindCSS for the utility-first CSS framework
+- LLaMA team for the powerful AI model
 - All contributors who have helped shape NeuroSync
 
 ---
